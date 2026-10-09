@@ -1,0 +1,164 @@
+/* Layout: the pulley scene on the left, controls, the work done table and a
+   short explanation on the right. Same look as the other simulations. */
+:root{
+  --bg:#e3eaed; --paper:#f6f9fa; --ink:#18232b; --muted:#56656f; --line:#c7d3d8;
+  --accent:#1b62c4; --accent-ink:#ffffff; --load:#2a6b45; --rope:#d23b30;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f171c; --paper:#172229; --ink:#e4edf1; --muted:#9aabb5; --line:#2b3a43;
+    --accent:#5b9bf0; --accent-ink:#0b1620; --load:#58c08a; --rope:#ff7a6e;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --paper:#172229; --ink:#e4edf1; --muted:#9aabb5; --line:#2b3a43;
+  --accent:#5b9bf0; --accent-ink:#0b1620; --load:#58c08a; --rope:#ff7a6e;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.5}
+.app{width:fit-content;max-width:100%;margin:0 auto;padding:14px 24px 14px}
+
+/* Header */
+.top{position:relative;text-align:center}
+.title-block{max-width:720px;margin:0 auto}
+.top h1{font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;font-weight:800;font-size:clamp(28px,4.2vw,46px);line-height:1.05;letter-spacing:-0.02em;margin:0 0 8px;text-wrap:balance}
+.lede{margin:0 auto 14px;color:var(--muted);font-size:18px;max-width:80ch}
+.favicon-link{position:absolute;top:0;right:6px;display:inline-block;line-height:0;transition:transform .2s ease}
+.favicon-link:hover,.favicon-link:focus-visible{transform:scale(1.15) rotate(10deg)}
+.favicon-img{width:58px;height:58px;display:block}
+
+/* Full screen button, top left of the header */
+.btn.iconbtn{display:inline-grid;place-items:center;width:48px;height:48px;padding:0;line-height:0}
+.btn.iconbtn svg{display:block;width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top .iconbtn{position:absolute;top:0;left:0;margin:0}
+
+html.pseudo-fs body{overflow:hidden}
+html.pseudo-fs .app{position:fixed;inset:0;z-index:1000;max-width:none;overflow:auto;background:var(--bg)}
+html.pseudo-fs .app>*{max-width:1240px;margin-left:auto;margin-right:auto}
+
+/* Main grid */
+/* the scene grows to fill the height of the window; the side panel is only as wide as its buttons */
+.layout{display:grid;grid-template-columns:minmax(0,var(--stage-w,calc((100vh - 200px) * 640 / 690))) max-content;gap:22px;align-items:start;justify-content:center}
+.stagecol{min-width:0}
+.stage{position:relative;container-type:inline-size;border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px var(--line);background:#dfe8ec}
+.stage canvas{display:block;width:100%;height:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.side{min-width:0;display:flex;flex-direction:column;gap:14px}
+/* long text wraps to the width the buttons need, rather than widening the panel */
+.hint,.ctl-note,.note,.worktbl{contain:inline-size}
+.actions .hint{flex:1 1 100%}
+
+/* Motor control box buttons, sitting on the box drawn in the scene */
+.mpanel{position:absolute;display:flex;flex-direction:column;justify-content:space-between;padding:0}
+.mbtn{width:100%;display:block;font:inherit;font-weight:800;font-size:1.95cqw;line-height:1.1;padding:.85cqw 0;border-radius:.9cqw;cursor:pointer;
+  -webkit-user-select:none;user-select:none;touch-action:none;border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 .45cqw 0 #161b20}
+.mbtn:active:not(:disabled){transform:translateY(.35cqw);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 .1cqw 0 #161b20}
+.mbtn.lift{background:#2e9e55;color:#fff}
+.mbtn.lift:active{background:#25864a}
+.mbtn.reset{background:#b9c2c9;color:#1b252c}
+.mbtn:disabled{opacity:.55;cursor:default}
+
+/* Cards */
+.fig{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.controls{display:flex;flex-direction:column;gap:14px}
+.ctl{display:grid;grid-template-columns:auto auto;justify-content:start;align-items:center;gap:6px 12px}
+.ctl-label{font-weight:700;font-size:14.5px;min-width:70px}
+.ctl-note{grid-column:2;color:var(--muted);font-size:13.5px}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding-top:12px;border-top:1px solid var(--line)}
+.ctl-row .swgroup{margin-right:auto}
+.actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;min-height:38px}
+.hint{margin:0;color:var(--muted);font-size:14px}
+
+/* Buttons and switches */
+.btn{font:inherit;font-weight:700;font-size:14.5px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:active:not(:disabled){background:var(--line)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.pausebtn{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.pausebtn svg{width:11px;height:11px}
+.pausebtn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.segs{display:flex;align-items:center;gap:1px;padding:2px;border:1.5px solid var(--line);border-radius:999px;background:var(--paper);flex-wrap:wrap}
+.seg{font:inherit;font-weight:700;font-size:14px;border:0;background:transparent;color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg.on{background:var(--ink);color:var(--paper)}
+.swgroup{display:flex;align-items:center;gap:6px;font:inherit;font-weight:700;font-size:14px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.insw{position:relative;display:inline-block;width:32px;height:20px;flex:none}
+.insw input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.insw .track{position:absolute;inset:0;background:var(--line);border-radius:999px;pointer-events:none;transition:background .15s}
+.insw .track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--paper);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s}
+.insw input:checked ~ .track{background:var(--accent)}
+.insw input:checked ~ .track::after{transform:translateX(12px)}
+.insw input:focus-visible ~ .track{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Load picker: a crate for each load, sized and coloured like the one in the scene */
+.loads{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.loadpick{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:78px;padding:8px 8px 6px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.loadpick:hover{border-color:var(--accent)}
+.loadpick.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.crate{display:block;border:1.5px solid;border-radius:3px}
+/* the controls panel always uses the light-mode colours */
+.fig.controls{
+  --bg:#e3eaed; --paper:#f6f9fa; --ink:#18232b; --muted:#56656f; --line:#c7d3d8;
+  --accent:#1b62c4; --accent-ink:#ffffff; --load:#2a6b45; --rope:#d23b30;
+  color-scheme:light; background:var(--paper); color:var(--ink); border-color:var(--line);
+}
+.loadpick .icon{display:block}
+
+/* Work done panel, with a minimise button */
+.fighead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fighead h2{margin:0;font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;font-size:18px;font-weight:800}
+.fig.min{padding-top:12px;padding-bottom:12px}
+.fighead + .work{margin-top:6px}
+.minbtn{display:inline-grid;place-items:center;width:32px;height:32px;padding:0;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;flex:none}
+.minbtn:hover{border-color:var(--accent)}
+.minbtn svg{width:13px;height:13px}
+
+/* Work done table */
+.work{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.work th,.work td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+.work thead th{font-size:13px;color:var(--muted);font-weight:700}
+.work thead th:nth-child(2){color:var(--rope)}
+.work thead th:nth-child(3){color:var(--load)}
+.work tbody th{text-align:left;font-weight:400;color:var(--muted);font-size:14.5px}
+.work td{font-weight:700;font-size:15.5px}
+.work td small{font-weight:400;font-size:12px;color:var(--muted)}
+.work tr.total td,.work tr.total th{border-bottom:0;font-size:16.5px;color:var(--ink)}
+.work tr.total th{font-weight:700}
+.note{margin:8px 0 0;color:var(--muted);font-size:14px}
+
+
+/* Footer and links */
+.bottom-block{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;margin-top:14px}
+.more-block{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left}
+.more-sims{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.more-sims:hover,.more-sims:focus-visible{color:var(--accent)}
+.more-sims-icon{width:38px;height:38px;display:block;transition:transform .2s ease}
+.more-sims:hover .more-sims-icon,.more-sims:focus-visible .more-sims-icon{transform:scale(1.15) rotate(10deg)}
+.more-sims-note{margin:0;color:var(--muted);font-size:13px;max-width:440px;line-height:1.4}
+.coffee-row{display:flex;justify-content:flex-end;margin-left:auto}
+.coffee-embed-frame{display:inline-block;line-height:0;transition:transform .2s ease}
+.coffee-embed-frame:hover,.coffee-embed-frame:focus-within{transform:scale(1.08)}
+.coffee-embed{width:250px;height:60px;border:0;border-radius:10px;overflow:hidden}
+
+@media (min-width:961px){
+  .side{max-height:var(--stage-h,none);overflow-y:auto;overscroll-behavior:contain}
+}
+@media (max-width:960px){
+  .app{width:auto}
+  .layout{grid-template-columns:1fr}
+  .stagecol{max-width:600px;width:100%;margin:0 auto}
+}
+@media (max-width:640px){
+  .app{padding:18px 16px 24px}
+  .favicon-img{width:42px;height:42px}
+  .top h1{padding:0 36px}
+  .ctl{grid-template-columns:1fr}
+  .ctl-note{grid-column:1}
+  .loadpick{min-width:0;padding:6px 5px 5px;font-size:14px}
+  .loadpick .icon{width:48px;height:auto}
+}
