@@ -647,9 +647,9 @@ function draw(ctx, sim, k, o) {
 
   // how far the load has risen, and how much rope has been pulled
   const ex = L.effortX;
-  bracket(ctx, L.loadX - 170, SCALE_TOP, L.boxBottom, `lifted\n${fmtM(x)}`, '#2a6b45', 'left');
+  if (o.distances) bracket(ctx, L.loadX - 170, SCALE_TOP, L.boxBottom, `lifted\n${fmtM(x)}`, '#2a6b45', 'left');
   const tagY = FY + sim.s * PPM, bottom = mode === 'weights' ? hangerY - 8 : mode === 'motor' ? FLOOR_Y - 70 : FLOOR_Y - 10;
-  bracket(ctx, ex + (mode === 'weights' ? 52 : 26), FY, Math.min(tagY, bottom), `rope pulled\n${fmtM(sim.s)}`, COL.tag, 'right', tagY > bottom + 1);
+  if (o.distances) bracket(ctx, ex + (mode === 'weights' ? 52 : 26), FY, Math.min(tagY, bottom), `rope pulled\n${fmtM(sim.s)}`, COL.tag, 'right', tagY > bottom + 1);
 
   // the hand and its newton meter
   if (mode === 'hand') {
@@ -705,13 +705,6 @@ function draw(ctx, sim, k, o) {
     ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
   }
   if (mode === 'weights') drawPalette(ctx, sim.held);
-
-  // time paused chip
-  if (o.paused) {
-    ctx.font = `700 12.5px ${FONT}`;
-    rr(ctx, 12, H - 40, 70, 26, 13); ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.fill();
-    ctx.lineWidth = 1.5; ctx.strokeStyle = '#c27a00'; ctx.stroke(); ctx.fillStyle = '#c27a00'; ctx.textAlign = 'center'; ctx.fillText('Paused', 47, H - 22.5);
-  }
 }
 
 // ===== React UI =====
@@ -842,7 +835,7 @@ function App() {
   const [n, setN] = useState(2);
   const [M, setM] = useState(6);
   const [arrows, setArrows] = useState(true);
-  const [paused, setPaused] = useState(false);
+  const [distances, setDistances] = useState(true);
   const lastForce = useRef(0);
   const [workOpen, setWorkOpen] = useState(false);   // the work done panel starts minimised
   // Size the scene so the whole page fits the window height with no scrolling
@@ -865,7 +858,7 @@ function App() {
     return () => { cancelAnimationFrame(r); window.removeEventListener('resize', fit); document.removeEventListener('fullscreenchange', fit); };
   }, []);
   const optsRef = useRef({});
-  optsRef.current = { arrows, paused };
+  optsRef.current = { arrows, distances };
   const refresh = () => setUi(simRef.current.snapshot());
 
   useEffect(() => {
@@ -878,7 +871,7 @@ function App() {
       if (sized !== w) { cv.width = Math.round(w * dpr); cv.height = Math.round((w * H / W) * dpr); sized = w; }
       const dt = Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
       const o = optsRef.current;
-      if (!o.paused) sim.update(dt);
+      sim.update(dt);
       draw(ctx, sim, (cv.width / W), { ...o, reduced: rm.matches, now: now / 1000 });
       setUi(sim.snapshot());
       raf = requestAnimationFrame(loop);
@@ -887,15 +880,6 @@ function App() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  useEffect(() => {
-    const onKey = e => {
-      const tag = (e.target.tagName || '').toLowerCase();
-      if (['button', 'input', 'select', 'textarea', 'a'].includes(tag)) return;
-      if (e.key === ' ') { e.preventDefault(); setPaused(p => !p); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   // keep = true when only the load or the number of pulleys changes: the
   // masses stay on the hanger and the load carries on from where it is
@@ -913,7 +897,7 @@ function App() {
         sim.fallWork = old.s > 0 ? old.fallWork * (sim.s / old.s) : 0;
       }
     }
-    setMode(m); setN(nn); setM(mm); setPaused(false); refresh();
+    setMode(m); setN(nn); setM(mm); refresh();
   };
   const reset = () => setup(mode, n, M);
 
@@ -979,7 +963,7 @@ function App() {
 
   // motor: hold to lift or lower
   const motor = dir => () => { simRef.current.motor = dir; refresh(); };
-  const motorReset = () => { simRef.current.motor = -1; setPaused(false); refresh(); };
+  const motorReset = () => { simRef.current.motor = -1; refresh(); };
   const motorBtn = (dir, label) => (
     <button className="mbtn lift" onPointerDown={motor(dir)} onPointerUp={motor(0)} onPointerLeave={motor(0)} onPointerCancel={motor(0)}
       onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); motor(dir)(); } }}
@@ -1005,7 +989,7 @@ function App() {
     <div className="app" ref={appRef}>
       <header className="top">
         <FullscreenButton />
-        <a className="favicon-link" href="https://awm11.github.io/" target="_blank" rel="noopener noreferrer" aria-label="Visit awm11.github.io">
+        <a className="favicon-link" href="https://alexmoorephysics.com/" target="_blank" rel="noopener noreferrer" aria-label="Visit alexmoorephysics.com">
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="favicon-img" />
         </a>
         <div className="title-block">
@@ -1019,6 +1003,8 @@ function App() {
           <div className="stage">
             <canvas ref={cvRef} style={{ aspectRatio: `${W} / ${H}` }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={() => { simRef.current.ptr = null; }}
               role="img" aria-label={`${cfg.title} lifting a ${s.M} kg load. Lifted ${fmtM(s.x)}, rope pulled ${fmtM(s.s)}, pulling force ${fmtN(pullForce)}.`} />
+            {s.mode === 'hand' && <button className="btn ghost stagebtn" onClick={reset}>Reset</button>}
+            {s.mode === 'weights' && <button className="btn ghost stagebtn" onClick={removeDisc} disabled={!s.discs}>Clear hanger</button>}
             {s.mode === 'motor' && (() => {
               const cb = motorPanel(s.effortX);
               return (
@@ -1063,7 +1049,6 @@ function App() {
               {s.mode === 'weights' && (
                 <>
                   <p className="hint">Drag masses from the shelf onto the hanger. Drag one off the hanger to remove it.</p>
-                  <button className="btn ghost" onClick={removeDisc} disabled={!s.discs}>Clear hanger</button>
                   {s.balanced && Math.abs(s.sv) < 1e-6 && !s.atTop && <button className="btn primary" onClick={nudge}>Nudge</button>}
                 </>
               )}
@@ -1074,11 +1059,10 @@ function App() {
                 <span className="insw"><input type="checkbox" checked={arrows} onChange={() => setArrows(a => !a)} /><span className="track" aria-hidden="true" /></span>
                 <span>Show force arrows</span>
               </label>
-              <button className={'btn pausebtn' + (paused ? ' on' : '')} aria-pressed={paused} onClick={() => setPaused(p => !p)}>
-                <svg viewBox="0 0 12 12" aria-hidden="true"><path d={paused ? 'M3 1.5 L10.5 6 L3 10.5 Z' : 'M2.5 1.5 h2.6 v9 h-2.6 z M6.9 1.5 h2.6 v9 h-2.6 z'} fill="currentColor" /></svg>
-                {paused ? 'Play' : 'Pause'}
-              </button>
-              {mode !== 'motor' && <button className="btn ghost" onClick={reset}>Reset</button>}
+              <label className="swgroup">
+                <span className="insw"><input type="checkbox" checked={distances} onChange={() => setDistances(d => !d)} /><span className="track" aria-hidden="true" /></span>
+                <span>Show distances</span>
+              </label>
             </div>
           </div>
 
@@ -1112,7 +1096,7 @@ function App() {
 
       <div className="bottom-block">
         <div className="more-block">
-          <a className="more-sims" href="https://awm11.github.io/" target="_blank" rel="noopener noreferrer">
+          <a className="more-sims" href="https://alexmoorephysics.com/" target="_blank" rel="noopener noreferrer">
             <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="more-sims-icon" />
             <span>See other simulations</span>
           </a>
