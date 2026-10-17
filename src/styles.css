@@ -19,13 +19,13 @@
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.5}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.5}
 .app{width:fit-content;max-width:100%;margin:0 auto;padding:14px 24px 14px}
 
 /* Header */
 .top{position:relative;text-align:center}
 .title-block{max-width:720px;margin:0 auto}
-.top h1{font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;font-weight:800;font-size:clamp(28px,4.2vw,46px);line-height:1.05;letter-spacing:-0.02em;margin:0 0 8px;text-wrap:balance}
+.top h1{font-family:"Archivo","IBM Plex Sans",system-ui,sans-serif;font-weight:800;font-size:clamp(28px,4.2vw,46px);line-height:1.05;letter-spacing:-0.02em;margin:0 0 8px;text-wrap:balance}
 .lede{margin:0 auto 14px;color:var(--muted);font-size:18px;max-width:80ch}
 .favicon-link{position:absolute;top:0;right:6px;display:inline-block;line-height:0;transition:transform .2s ease}
 .favicon-link:hover,.favicon-link:focus-visible{transform:scale(1.15) rotate(10deg)}
@@ -108,7 +108,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 
 /* Work done panel, with a minimise button */
 .fighead{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.fighead h2{margin:0;font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;font-size:18px;font-weight:800}
+.fighead h2{margin:0;font-family:"Archivo","IBM Plex Sans",system-ui,sans-serif;font-size:18px;font-weight:800}
 .fig.min{padding-top:12px;padding-bottom:12px}
 .fighead + .work{margin-top:6px}
 .minbtn{display:inline-grid;place-items:center;width:32px;height:32px;padding:0;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;flex:none}
@@ -122,7 +122,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(-
 .work thead th:nth-child(2){color:var(--rope)}
 .work thead th:nth-child(3){color:var(--load)}
 .work tbody th{text-align:left;font-weight:400;color:var(--muted);font-size:14.5px}
-.work td{font-weight:700;font-size:15.5px}
+.work td{font-weight:700;font-size:15.5px;font-variant-numeric:tabular-nums}
 .work td small{font-weight:400;font-size:12px;color:var(--muted)}
 .work tr.total td,.work tr.total th{border-bottom:0;font-size:16.5px;color:var(--ink)}
 .work tr.total th{font-weight:700}

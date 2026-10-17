@@ -272,7 +272,7 @@ class Sim {
 }
 
 // ===== Canvas drawing =====
-const FONT = '"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif';
+const FONT = '"IBM Plex Sans", "Segoe UI", system-ui, sans-serif';
 const COL = {
   wall0: '#e3ebee', wall1: '#cfdbe0', beam: '#4a5560', metal: '#8f99a3', metalDk: '#5c6670',
   rope: '#c9a46a', ropeDk: '#8a6a3c', tick: '#5a4126', tick5: '#2f6fb3', tag: '#d23b30',
