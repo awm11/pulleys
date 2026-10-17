@@ -43,7 +43,7 @@ const MOTOR_W = 580;                    // motor mode: pulleys shifted left to l
 const MOTOR_V = 0.3;                    // m/s of rope
 const RAMP = 90;                        // N/s, how fast the motor takes up the strain
 // Newton meter held in the hand: hook at the top on the rope, tube on the hand
-const NM = { L0: 126, rod: 110, perN: 0.4, maxN: 250 };   // px; 0.4 px of stretch per newton
+const NM = { L0: 136, rod: 116, perN: 0.4, maxN: 250 };   // px; 0.4 px of stretch per newton (rod = L0 − 20, so the pointer sits on 0 with no pull)
 const HANGER = 0;                       // kg, the hanger itself is light enough to ignore
 const discT = m => 4 + 1.6 * m;         // slotted mass: thickness and width in px
 const discW = m => 30 + 2.2 * m;
@@ -427,26 +427,56 @@ function drawBeam(ctx, L) {
   if (L.anchorKind === 'beam') { ctx.fillStyle = COL.metalDk; ctx.beginPath(); ctx.arc(L.anchor.x, BEAM_Y + 2, 4, 0, Math.PI * 2); ctx.fill(); }
 }
 // Newton meter: hook on the rope at the top, tube held in the hand at the bottom
+// (a spring balance, upside down: the spring is fixed to the bottom cap and the
+// rod from the hook pulls its top end up, carrying the red pointer up the scale)
 function drawNewtonMeter(ctx, x, hookY, handY, F, showValue) {
-  const tubeTop = handY - 120, tubeBot = handY - 8, pointer = hookY + NM.rod;
-  ctx.strokeStyle = '#6b7680'; ctx.lineWidth = 2; ctx.beginPath();
+  const zero = handY - 20, tubeTop = zero - NM.maxN * NM.perN - 8, tubeBot = handY + 2, hw = 12;
+  const pointer = Math.min(hookY + NM.rod, zero), anchor = handY - 3;
+  const CAP = '#2f5d8a', CAP_DK = '#1d3f61';
+  // hook on the rope
+  ctx.strokeStyle = '#5c6670'; ctx.lineWidth = 2.2; ctx.beginPath();
   ctx.moveTo(x, hookY - 6); ctx.quadraticCurveTo(x + 7, hookY - 4, x + 5, hookY + 3); ctx.lineTo(x, hookY + 6); ctx.stroke();
-  ctx.lineWidth = 3; ctx.strokeStyle = '#9aa3ac'; ctx.beginPath(); ctx.moveTo(x, hookY + 6); ctx.lineTo(x, Math.max(hookY + 6, Math.min(pointer, tubeTop + 4))); ctx.stroke();
-  rr(ctx, x - 9, tubeTop, 18, tubeBot - tubeTop, 5); ctx.fillStyle = 'rgba(236,241,244,0.96)'; ctx.fill();
-  ctx.strokeStyle = '#7d8790'; ctx.lineWidth = 1.2; ctx.stroke();
-  // scale: 0 at the bottom, 250 N near the top (every 25 N)
-  const zero = handY - 16;
-  ctx.strokeStyle = '#3b4650'; ctx.lineWidth = 1; ctx.font = `700 8px ${FONT}`; ctx.textAlign = 'right'; ctx.fillStyle = '#3b4650';
+  // clear plastic tube
+  rr(ctx, x - hw, tubeTop, hw * 2, tubeBot - tubeTop, 4); ctx.fillStyle = 'rgba(232,240,246,0.92)'; ctx.fill();
+  // scale: ticks every 25 N inside the tube, numbers every 50 N beside it, unit on top
+  ctx.strokeStyle = '#2e3a44'; ctx.lineWidth = 1; ctx.font = `700 8px ${FONT}`; ctx.textAlign = 'right'; ctx.fillStyle = '#2e3a44';
   for (let f = 0; f <= NM.maxN; f += 25) {
     const yy = zero - f * NM.perN, big = f % 50 === 0;
-    ctx.beginPath(); ctx.moveTo(x + 9, yy); ctx.lineTo(x + (big ? 3 : 5), yy); ctx.stroke();
-    if (big && f) ctx.fillText(String(f), x - 11, yy + 3);
+    ctx.beginPath(); ctx.moveTo(x - hw, yy); ctx.lineTo(x - hw + (big ? 7 : 4), yy); ctx.stroke();
+    if (big) ctx.fillText(String(f), x - hw - 3, yy + 3);
   }
-  ctx.fillStyle = '#d23b30'; ctx.fillRect(x - 7, Math.min(pointer, zero) - 1.5, 14, 3);
-  if (showValue) { ctx.textAlign = 'left'; ctx.font = `700 15px ${FONT}`; haloText(ctx, fmtN(F), x + 14, tubeTop + 12, COL.ink); }
+  ctx.font = `700 10px ${FONT}`; ctx.fillText('N', x - hw - 3, tubeTop - 2);
+  // the spring: a helix seen slightly from above, with a fixed number of turns,
+  // so the turns open out as it stretches. Back half drawn first, front half over it.
+  const y0 = pointer + 2, coils = 8, rad = 6, N = coils * 32, len = anchor - y0;
+  const tilt = clamp(3 - (len / coils) * 0.12, 1.2, 3);   // closed up the turns read as rings; stretched, as a clean coil
+  const pt = i => { const th = (i / N) * coils * 2 * Math.PI; return [x + rad * Math.cos(th), y0 + (i / N) * len + tilt * Math.sin(th), Math.sin(th + Math.PI / N * coils) > 0]; };
+  for (const front of [false, true]) {
+    ctx.strokeStyle = front ? '#4f5961' : '#808a93'; ctx.lineWidth = front ? 1.5 : 1.3; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const [ax, ay, f] = pt(i), [bx, by] = pt(i + 1);
+      if (f === front) { ctx.moveTo(ax, ay); ctx.lineTo(bx, by); }
+    }
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  // metal rod from the hook down to the pointer
+  ctx.strokeStyle = '#8b959e'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x, hookY + 6); ctx.lineTo(x, pointer); ctx.stroke();
+  // red pointer across the tube
+  ctx.fillStyle = '#d23b30'; ctx.fillRect(x - hw + 1, pointer - 1.5, hw * 2 - 2, 3);
+  // shine down the tube, then its outline
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(x + hw - 5, tubeTop + 8, 2, tubeBot - tubeTop - 16);
+  rr(ctx, x - hw, tubeTop, hw * 2, tubeBot - tubeTop, 4); ctx.strokeStyle = '#6f7c88'; ctx.lineWidth = 1.2; ctx.stroke();
+  // coloured end caps
+  for (const [cy, h] of [[tubeTop - 3, 7], [tubeBot - 5, 8]]) {
+    rr(ctx, x - hw - 1, cy, hw * 2 + 2, h, 2.5); ctx.fillStyle = CAP; ctx.fill(); ctx.strokeStyle = CAP_DK; ctx.lineWidth = 1; ctx.stroke();
+  }
+  ctx.fillStyle = CAP_DK; ctx.beginPath(); ctx.arc(x, tubeTop + 0.5, 2, 0, Math.PI * 2); ctx.fill();   // hole the rod runs through
+  if (showValue) { ctx.textAlign = 'left'; ctx.font = `700 15px ${FONT}`; haloText(ctx, fmtN(F), x + hw + 6, tubeTop + 12, COL.ink); }
   // the hand gripping the ring at the bottom
-  ctx.strokeStyle = '#7d8790'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, handY - 2, 5, 0, Math.PI * 2); ctx.stroke();
-  drawHand(ctx, x, handY + 4);
+  ctx.strokeStyle = '#5c6670'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, handY + 9, 5, 0, Math.PI * 2); ctx.stroke();
+  drawHand(ctx, x, handY + 14);
 }
 function drawHand(ctx, x, y, ghost) {
   ctx.save(); if (ghost) ctx.globalAlpha = 0.45;
@@ -890,7 +920,8 @@ function App() {
     if (keep) {
       if (m === 'weights') sim.discs = old.discs;
       if (nn === old.n) { sim.hy0 = old.hy0; sim.sv = m === 'weights' ? old.sv : 0; }
-      sim.s = Math.min(old.x * nn, sim.sMax(sim.L));
+      // when pulley count changes, reset the load to the bottom; otherwise keep its position
+      sim.s = nn === old.n ? Math.min(old.x * nn, sim.sMax(sim.L)) : 0;
       if (sim.s > 0) {
         sim.T = sim.Fload; sim.Tshow = old.Tshow; sim.upShow = old.upShow;   // the pull on the load stays steady; the motor's pull eases to its new value
         sim.work = sim.Fload * sim.s;
